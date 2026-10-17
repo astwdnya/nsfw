@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The Iron Giant 2">
+    <meta name="theme-color" content="#0f1117">
+    <title>The Iron Giant 2 - iOS Edition</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b0d13;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Safe area support for iPhone notch & dynamic island */
+        header {
+            padding-top: env(safe-area-inset-top, 8px);
+            padding-left: env(safe-area-inset-left, 12px);
+            padding-right: env(safe-area-inset-right, 12px);
+            height: calc(48px + env(safe-area-inset-top, 0px));
+            background: linear-gradient(180deg, rgba(20,24,35,0.95) 0%, rgba(15,17,23,0.85) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .title-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-bar h1 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #ff7eb3, #ff758c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #a0aec0;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #game-wrapper {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Loading indicator */
+        #loader {
+            position: absolute;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            color: #e2e8f0;
+            font-size: 14px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 117, 140, 0.2);
+            border-top: 3px solid #ff758c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Fullscreen mode hides header */
+        body.is-fullscreen header {
+            display: none;
+        }
+
+        /* Floating action buttons in fullscreen */
+        .floating-controls {
+            position: fixed;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+            right: calc(16px + env(safe-area-inset-right, 0px));
+            z-index: 200;
+            display: flex;
+            gap: 8px;
+            opacity: 0.35;
+            transition: opacity 0.3s ease;
+        }
+
+        .floating-controls:hover, .floating-controls:active {
+            opacity: 1;
+        }
+
+        .fab {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(20, 24, 35, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .fab svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <header id="app-header">
+        <div class="title-bar">
+            <h1>The Iron Giant 2</h1>
+            <span class="badge">iOS Offline</span>
+        </div>
+        <div class="controls">
+            <button class="btn" id="btn-reload" title="Restart Game">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Restart
+            </button>
+            <button class="btn" id="btn-fullscreen" title="Fullscreen">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                Fullscreen
+            </button>
+        </div>
+    </header>
+
+    <div id="game-wrapper">
+        <div id="loader">
+            <div class="spinner"></div>
+            <span>Loading Game Engine...</span>
+        </div>
+        <div id="game-container"></div>
+    </div>
+
+    <div class="floating-controls" id="floating-controls">
+        <button class="fab" id="fab-fullscreen" title="Toggle Fullscreen">
+            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </button>
+        <button class="fab" id="fab-reload" title="Reload Game">
+            <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+    </div>
+
+    <!-- Offline Ruffle WebAssembly Engine -->
+    <script src="ruffle.js"></script>
+    <script>
+        let player = null;
+        const container = document.getElementById('game-container');
+        const loader = document.getElementById('loader');
+
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = {
+            letterbox: "on",
+            autoplay: "on",
+            unmuteOverlay: "visible",
+            backgroundColor: "#000000",
+            scale: "showAll",
+            forceScale: true,
+            quality: "high",
+            splashScreen: false
+        };
+
+        function initGame() {
+            if (player) {
+                try { player.remove(); } catch(e) {}
+            }
+            loader.style.opacity = '1';
+
+            try {
+                const ruffle = window.RufflePlayer.newest();
+                if (!ruffle) {
+                    loader.innerHTML = '<span style="color:#ff6b6b">Ruffle engine not found!</span>';
+                    return;
+                }
+
+                player = ruffle.createPlayer();
+                player.style.width = '100%';
+                player.style.height = '100%';
+                container.appendChild(player);
+
+                player.addEventListener('loadeddata', () => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => { loader.style.display = 'none'; }, 300);
+                });
+
+                // Load local offline SWF
+                player.load('game.swf');
+            } catch (err) {
+                console.error('Init error:', err);
+                loader.innerHTML = '<span style="color:#ff6b6b">Error initializing game: ' + err.message + '</span>';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            initGame();
+        });
+
+        // Controls
+        document.getElementById('btn-reload').addEventListener('click', () => initGame());
+        document.getElementById('fab-reload').addEventListener('click', () => initGame());
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                }
+                document.body.classList.add('is-fullscreen');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                document.body.classList.remove('is-fullscreen');
+            }
+        }
+
+        document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+        document.getElementById('fab-fullscreen').addEventListener('click', toggleFullscreen);
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.body.classList.remove('is-fullscreen');
+            }
+        });
+
+        // Register Service Worker for offline PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration skipped:', err));
+        }
+    </script>
+</body>
+</html>
